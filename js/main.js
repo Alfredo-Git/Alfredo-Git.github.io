@@ -10,17 +10,35 @@
 
 // Put variables in global scope to make them available to the browser console.
 const video = document.querySelector('video');
-const canvas = window.canvas = document.querySelector('canvas');
+var canvas = window.canvas = document.querySelector('canvas');
 canvas.width = 480;
 canvas.height = 360;
 var videoSelect = document.querySelector('select#videoSource');
+
 
 const button = document.querySelector('button');
 button.onclick = function() {
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+  
+  canvas.toBlob(function(blob) {
+    var newImg = document.createElement('img'),
+        url = URL.createObjectURL(blob);
+  
+    newImg.onload = function() {
+      // no longer need to read the blob so it's revoked
+      URL.revokeObjectURL(url);
+    };
+  
+    newImg.src = url;
+    document.body.appendChild(newImg);
+  });
+
+
 };
+
+
 
 navigator.mediaDevices.enumerateDevices()
   .then(gotDevices).then(getStream).catch(handleError);
@@ -54,7 +72,7 @@ function getStream() {
     video: {
       deviceId: {exact: videoSelect.value}
     }
-  };
+  };  
 
   navigator.mediaDevices.getUserMedia(constraints).
     then(handleSuccess).catch(handleError);
